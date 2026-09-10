@@ -31,8 +31,8 @@ const navigation = [
 
 export function AppSidebar() {
   return (
-    <aside className="flex min-h-screen w-60 flex-col border-r">
-      <div className="border-b p-4">
+    <aside className="flex min-h-screen w-60 flex-col border-r border-neutral-200">
+      <div className="border-b border-neutral-200 p-4">
         <span className="font-semibold">Acme Cloud</span>
       </div>
 
@@ -44,12 +44,13 @@ export function AppSidebar() {
             className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-neutral-100"
           >
             <Icon aria-hidden="true" size={18} />
+
             {label}
           </Link>
         ))}
       </nav>
 
-      <div className="border-t p-3">
+      <div className="border-t border-neutral-200 p-3">
         <Link
           href="/settings"
           className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-neutral-100"
