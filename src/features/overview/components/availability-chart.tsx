@@ -9,10 +9,14 @@ type AvailabilityChartProps = {
 }
 
 export function AvailabilityChart({ data }: AvailabilityChartProps) {
+  const chartData = data.map((point) => ({
+    ...point,
+    timestampMs: new Date(point.timestamp).getTime(),
+  }))
   return (
     <div className="h-64">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={[...data]}>
+        <LineChart data={chartData}>
           <XAxis dataKey="timestamp" />
 
           <YAxis
