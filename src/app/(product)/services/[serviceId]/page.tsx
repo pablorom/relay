@@ -1,16 +1,35 @@
+import { dehydrate, HydrationBoundary } from '@tanstack/react-query'
 import { notFound } from 'next/navigation'
+import { Suspense } from 'react'
 
+import { parseServiceMetricsRange } from '@/domain/service/service-metrics.schema'
+import { ServiceMetricsPanel } from '@/features/services/components/service-metrics-panel'
+import { serviceMetricsKeys } from '@/features/services/queries/service-metrics.keys'
+import { makeQueryClient } from '@/lib/query/query-client'
 import { DEMO_WORKSPACE_ID } from '@/server/db/demo/workspaces'
 import { getServiceDetails } from '@/server/services/service.service'
+import { getServiceMetrics } from '@/server/services/metric.service'
+import { RecentDeploymentCard } from '@/features/services/components/recent-deployment-card'
+import { ServiceIncidentCard } from '@/features/services/components/service-incident-card'
 
 type ServicePageProps = {
   params: Promise<{
     serviceId: string
   }>
+
+  searchParams: Promise<{
+    range?: string | string[]
+  }>
 }
 
-export default async function ServicePage({ params }: ServicePageProps) {
-  const { serviceId } = await params
+export default async function ServicePage({ params, searchParams }: ServicePageProps) {
+  const [{ serviceId }, currentSearchParams] = await Promise.all([params, searchParams])
+
+  const rawRange = Array.isArray(currentSearchParams.range)
+    ? currentSearchParams.range[0]
+    : currentSearchParams.range
+
+  const range = parseServiceMetricsRange(rawRange)
 
   const details = await getServiceDetails(DEMO_WORKSPACE_ID, serviceId)
 
@@ -18,27 +37,50 @@ export default async function ServicePage({ params }: ServicePageProps) {
     notFound()
   }
 
-  const { service, team } = details
+  const queryClient = makeQueryClient()
+
+  await queryClient.query({
+    queryKey: serviceMetricsKeys.detail(serviceId, range),
+
+    queryFn: async () => {
+      const metrics = await getServiceMetrics(DEMO_WORKSPACE_ID, serviceId, range)
+
+      if (!metrics) {
+        throw new Error('Service metrics not found.')
+      }
+
+      return metrics
+    },
+
+    staleTime: 15_000,
+  })
+
+  const { service, team, deployments, incidents } = details
+
+  const latestDeployment = deployments[0] ?? null
+
+  const chartEvents = deployments.map((deployment) => ({
+    id: deployment.id,
+    timestamp: deployment.completedAt ?? deployment.startedAt,
+    label: deployment.version,
+  }))
+
+  const activeIncident = incidents.find((incident) => incident.status !== 'resolved') ?? null
 
   return (
     <div>
-      <p className="text-sm text-neutral-500">Services</p>
+      {/* keep your existing service header here */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {latestDeployment ? <RecentDeploymentCard deployment={latestDeployment} /> : null}
 
-      <div className="mt-2 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">{service.name}</h1>
-
-          <p className="mt-2 text-neutral-600">{service.description}</p>
-
-          <p className="mt-2 text-sm text-neutral-500">
-            {team?.name ?? 'Unassigned team'} ·{' '}
-            <span className="capitalize">{service.environment}</span>
-          </p>
-        </div>
-
-        <span className="rounded-md border border-neutral-200 px-3 py-1 text-sm capitalize">
-          {service.status}
-        </span>
+        {activeIncident ? <ServiceIncidentCard incident={activeIncident} /> : null}
+      </div>
+      <div className="mt-8">
+        <HydrationBoundary state={dehydrate(queryClient)}>
+          <Suspense fallback={<div className="rounded-lg border p-6">Loading metrics…</div>}>
+            <ServiceMetricsPanel serviceId={service.id} events={chartEvents} />
+          </Suspense>
+        </HydrationBoundary>
       </div>
     </div>
   )

@@ -6,3 +6,13 @@ export function findActiveIncidentsByWorkspaceId(workspaceId: string): readonly 
     (incident) => incident.workspaceId === workspaceId && incident.status !== 'resolved',
   )
 }
+
+export function findIncidentsByServiceId(
+  workspaceId: string,
+  serviceId: string,
+): readonly Incident[] {
+  return demoIncidents.filter(
+    (incident) =>
+      incident.workspaceId === workspaceId && incident.affectedServiceIds.includes(serviceId),
+  )
+}
