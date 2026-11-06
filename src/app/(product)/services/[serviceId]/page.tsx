@@ -11,6 +11,8 @@ import { getServiceDetails } from '@/server/services/service.service'
 import { getServiceMetrics } from '@/server/services/metric.service'
 import { RecentDeploymentCard } from '@/features/services/components/recent-deployment-card'
 import { ServiceIncidentCard } from '@/features/services/components/service-incident-card'
+import { InvestigationTimeline } from '@/features/investigation/components/investigation-timeline'
+import { getServiceInvestigationTimeline } from '@/server/services/investigation.service'
 
 type ServicePageProps = {
   params: Promise<{
@@ -31,9 +33,12 @@ export default async function ServicePage({ params, searchParams }: ServicePageP
 
   const range = parseServiceMetricsRange(rawRange)
 
-  const details = await getServiceDetails(DEMO_WORKSPACE_ID, serviceId)
+  const [details, timeline] = await Promise.all([
+    getServiceDetails(DEMO_WORKSPACE_ID, serviceId),
+    getServiceInvestigationTimeline(DEMO_WORKSPACE_ID, serviceId),
+  ])
 
-  if (!details) {
+  if (!details || timeline === null) {
     notFound()
   }
 
@@ -74,6 +79,9 @@ export default async function ServicePage({ params, searchParams }: ServicePageP
         {latestDeployment ? <RecentDeploymentCard deployment={latestDeployment} /> : null}
 
         {activeIncident ? <ServiceIncidentCard incident={activeIncident} /> : null}
+      </div>
+      <div className="mt-8">
+        <InvestigationTimeline items={timeline} />
       </div>
       <div className="mt-8">
         <HydrationBoundary state={dehydrate(queryClient)}>
