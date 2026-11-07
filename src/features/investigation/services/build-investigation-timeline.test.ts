@@ -64,6 +64,7 @@ describe('buildInvestigationTimeline', () => {
 
     expect(incident).toMatchObject({
       kind: 'incident',
+      recordId: 'inc-1',
       incidentId: 'INC-1042',
     })
   })

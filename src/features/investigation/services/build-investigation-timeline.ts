@@ -34,6 +34,7 @@ export function buildInvestigationTimeline({
     id: `incident:${incident.id}`,
     kind: 'incident',
     timestamp: incident.startedAt,
+    recordId: incident.id,
     incidentId: incident.incidentId,
     title: incident.title,
   }))

@@ -11,6 +11,7 @@ export type IncidentTimelineItem = {
   id: string
   kind: 'incident'
   timestamp: string
+  recordId: string
   incidentId: string
   title: string
 }

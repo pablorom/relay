@@ -1,4 +1,5 @@
 import type { InvestigationTimelineItem } from '@/domain/investigation/investigation-timeline.types'
+import Link from 'next/link'
 
 type InvestigationTimelineProps = {
   items: readonly InvestigationTimelineItem[]
@@ -57,7 +58,9 @@ export function InvestigationTimeline({ items }: InvestigationTimelineProps) {
           Investigation timeline
         </h2>
 
-        <p className="mt-1 text-sm text-neutral-500">Operational events affecting this service</p>
+        <p className="mt-1 text-sm text-neutral-500">
+          All recorded operational events affecting this service
+        </p>
       </div>
 
       {items.length === 0 ? (
@@ -83,7 +86,18 @@ export function InvestigationTimeline({ items }: InvestigationTimelineProps) {
                     {formatTimelineTimestamp(item.timestamp)}
                   </time>
 
-                  <h3 className="mt-1 font-medium">{content.title}</h3>
+                  <h3 className="mt-1 font-medium">
+                    {item.kind === 'incident' ? (
+                      <Link
+                        href={`/incidents/${encodeURIComponent(item.recordId)}`}
+                        className="rounded-sm underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900"
+                      >
+                        {content.title}
+                      </Link>
+                    ) : (
+                      content.title
+                    )}
+                  </h3>
 
                   <p className="mt-1 text-sm text-neutral-500">{content.description}</p>
                 </div>

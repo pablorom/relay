@@ -19,6 +19,7 @@ describe('InvestigationTimeline', () => {
         kind: 'incident',
         timestamp: '2026-09-27T13:34:00.000Z',
         incidentId: 'INC-1042',
+        recordId: 'inc-1',
         title: 'Checkout failures in EU region',
       },
     ]
@@ -53,5 +54,30 @@ describe('InvestigationTimeline', () => {
 
     expect(html).toContain('Metric anomaly: errorRate')
     expect(html).toContain('Recorded value: 0.08')
+  })
+
+  it('links incidents using their internal record ID', () => {
+    const items: InvestigationTimelineItem[] = [
+      {
+        id: 'incident:inc-1042',
+        kind: 'incident',
+        timestamp: '2026-09-27T13:34:00.000Z',
+        recordId: 'inc-1042',
+        incidentId: 'INC-1042',
+        title: 'Checkout failures in EU region',
+      },
+    ]
+
+    const html = renderToStaticMarkup(<InvestigationTimeline items={items} />)
+
+    expect(html).toContain('href="/incidents/inc-1042"')
+    expect(html).toContain('INC-1042')
+    expect(html).not.toContain('href="/incidents/INC-1042"')
+  })
+
+  it('explains that the timeline contains all recorded events', () => {
+    const html = renderToStaticMarkup(<InvestigationTimeline items={[]} />)
+
+    expect(html).toContain('All recorded operational events affecting this service')
   })
 })

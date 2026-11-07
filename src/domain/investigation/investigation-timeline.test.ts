@@ -11,6 +11,7 @@ describe('sortInvestigationTimeline', () => {
         kind: 'incident',
         timestamp: '2026-08-25T10:24:00.000Z',
         incidentId: 'INC-1042',
+        recordId: 'inc-1042',
         title: 'Checkout API elevated errors',
       },
       {
@@ -44,6 +45,7 @@ describe('sortInvestigationTimeline', () => {
         kind: 'incident',
         timestamp: '2026-08-25T10:24:00.000Z',
         incidentId: 'INC-1042',
+        recordId: 'inc-1042',
         title: 'Checkout API elevated errors',
       },
       {

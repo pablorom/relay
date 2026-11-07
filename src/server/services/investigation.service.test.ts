@@ -21,6 +21,7 @@ describe('getServiceInvestigationTimeline', () => {
         expect.objectContaining({
           id: 'incident:inc-1042',
           kind: 'incident',
+          recordId: 'inc-1042',
           incidentId: 'INC-1042',
           timestamp: '2026-09-27T13:34:00.000Z',
         }),
