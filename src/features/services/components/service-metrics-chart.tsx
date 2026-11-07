@@ -11,11 +11,9 @@ import {
   YAxis,
 } from 'recharts'
 
-import type { MetricPoint } from '@/domain/event/event.types'
+import type { MetricKind, MetricPoint } from '@/domain/event/event.types'
 import { useServiceMetricsContext } from '@/features/services/components/service-metrics-context'
 import type { ServiceChartEvent } from '@/features/services/types/service-chart-event'
-
-type MetricKind = 'requestRate' | 'errorRate' | 'latencyP95Ms'
 
 type ServiceMetricsChartProps = {
   title: string
