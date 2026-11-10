@@ -19,15 +19,19 @@ export default async function ServicesPage() {
           <Link
             key={service.id}
             href={`/services/${service.id}`}
-            className="flex items-center justify-between p-4 hover:bg-neutral-50"
+            className="flex min-w-0 flex-col gap-2 p-4 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:-outline-offset-2 sm:flex-row sm:items-center sm:justify-between"
           >
-            <div>
-              <div className="font-medium">{service.name}</div>
+            <div className="min-w-0 flex-1">
+              <div className="font-medium wrap-break-word">{service.name}</div>
 
-              <div className="mt-1 text-sm text-neutral-500">{service.description}</div>
+              <div className="mt-1 text-sm wrap-break-word text-neutral-500">
+                {service.description}
+              </div>
             </div>
 
-            <div className="text-sm text-neutral-600 capitalize">{service.status}</div>
+            <div className="shrink-0 self-start text-sm text-neutral-600 capitalize sm:self-auto">
+              {service.status}
+            </div>
           </Link>
         ))}
       </div>
