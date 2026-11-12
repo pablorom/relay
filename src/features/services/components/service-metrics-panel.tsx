@@ -1,8 +1,7 @@
 'use client'
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { usePathname, useSearchParams } from 'next/navigation'
-
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { parseServiceMetricsRange } from '@/domain/service/service-metrics.schema'
 import type { ServiceMetricsRange } from '@/domain/service/service-metrics.types'
 import { fetchServiceMetrics } from '@/features/services/api/fetch-service-metrics'
@@ -26,6 +25,7 @@ type ServiceMetricsPanelProps = {
 }
 
 export function ServiceMetricsPanel({ serviceId, events }: ServiceMetricsPanelProps) {
+  const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
@@ -42,11 +42,17 @@ export function ServiceMetricsPanel({ serviceId, events }: ServiceMetricsPanelPr
   })
 
   function changeRange(nextRange: ServiceMetricsRange) {
+    if (nextRange === range) {
+      return
+    }
+
     const params = new URLSearchParams(searchParams.toString())
 
     params.set('range', nextRange)
 
-    window.history.pushState(null, '', `${pathname}?${params.toString()}`)
+    router.push(`${pathname}?${params.toString()}`, {
+      scroll: false,
+    })
   }
 
   if (metricsQuery.isPending) {

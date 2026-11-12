@@ -13,6 +13,7 @@ import { RecentDeploymentCard } from '@/features/services/components/recent-depl
 import { ServiceIncidentCard } from '@/features/services/components/service-incident-card'
 import { InvestigationTimeline } from '@/features/investigation/components/investigation-timeline'
 import { getServiceInvestigationTimeline } from '@/server/services/investigation.service'
+import { createInvestigationWindow } from '@/domain/investigation/investigation-window'
 
 type ServicePageProps = {
   params: Promise<{
@@ -33,42 +34,48 @@ export default async function ServicePage({ params, searchParams }: ServicePageP
 
   const range = parseServiceMetricsRange(rawRange)
 
-  const [details, timeline] = await Promise.all([
+  const [details, metrics] = await Promise.all([
     getServiceDetails(DEMO_WORKSPACE_ID, serviceId),
-    getServiceInvestigationTimeline(DEMO_WORKSPACE_ID, serviceId),
+    getServiceMetrics(DEMO_WORKSPACE_ID, serviceId, range),
   ])
 
-  if (!details || timeline === null) {
+  if (!details || metrics === null) {
+    notFound()
+  }
+
+  const latestMetricPoint = metrics.at(-1)
+
+  const investigationWindow = latestMetricPoint
+    ? createInvestigationWindow(range, latestMetricPoint.timestamp)
+    : null
+
+  const timeline = investigationWindow
+    ? await getServiceInvestigationTimeline(DEMO_WORKSPACE_ID, serviceId, investigationWindow)
+    : []
+
+  if (timeline === null) {
     notFound()
   }
 
   const queryClient = makeQueryClient()
 
-  await queryClient.query({
-    queryKey: serviceMetricsKeys.detail(serviceId, range),
-
-    queryFn: async () => {
-      const metrics = await getServiceMetrics(DEMO_WORKSPACE_ID, serviceId, range)
-
-      if (!metrics) {
-        throw new Error('Service metrics not found.')
-      }
-
-      return metrics
-    },
-
-    staleTime: 15_000,
-  })
+  queryClient.setQueryData(serviceMetricsKeys.detail(serviceId, range), metrics)
 
   const { service, team, deployments, incidents } = details
 
   const latestDeployment = deployments[0] ?? null
 
-  const chartEvents = deployments.map((deployment) => ({
-    id: deployment.id,
-    timestamp: deployment.completedAt ?? deployment.startedAt,
-    label: deployment.version,
-  }))
+  const chartEvents = timeline.flatMap((item) =>
+    item.kind === 'deployment'
+      ? [
+          {
+            id: item.id,
+            timestamp: item.timestamp,
+            label: item.version,
+          },
+        ]
+      : [],
+  )
 
   const activeIncident = incidents.find((incident) => incident.status !== 'resolved') ?? null
 
@@ -81,7 +88,17 @@ export default async function ServicePage({ params, searchParams }: ServicePageP
         {activeIncident ? <ServiceIncidentCard incident={activeIncident} /> : null}
       </div>
       <div className="mt-8">
-        <InvestigationTimeline items={timeline} />
+        {investigationWindow ? (
+          <InvestigationTimeline items={timeline} window={investigationWindow} />
+        ) : (
+          <section className="rounded-lg border border-neutral-200 p-6">
+            <h2 className="text-lg font-semibold">Investigation timeline</h2>
+
+            <p className="mt-2 text-sm text-neutral-500">
+              No metrics are available to establish the selected investigation window.
+            </p>
+          </section>
+        )}
       </div>
       <div className="mt-8">
         <HydrationBoundary state={dehydrate(queryClient)}>

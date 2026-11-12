@@ -1,8 +1,10 @@
 import type { InvestigationTimelineItem } from '@/domain/investigation/investigation-timeline.types'
+import { InvestigationWindow } from '@/domain/investigation/investigation-window'
 import Link from 'next/link'
 
 type InvestigationTimelineProps = {
   items: readonly InvestigationTimelineItem[]
+  window?: InvestigationWindow
 }
 
 function formatTimelineTimestamp(timestamp: string): string {
@@ -47,7 +49,7 @@ function getTimelineContent(item: InvestigationTimelineItem): {
   }
 }
 
-export function InvestigationTimeline({ items }: InvestigationTimelineProps) {
+export function InvestigationTimeline({ items, window }: InvestigationTimelineProps) {
   return (
     <section
       aria-labelledby="investigation-timeline-heading"
@@ -59,7 +61,9 @@ export function InvestigationTimeline({ items }: InvestigationTimelineProps) {
         </h2>
 
         <p className="mt-1 text-sm text-neutral-500">
-          All recorded operational events affecting this service
+          {window
+            ? `Events after ${formatTimelineTimestamp(window.start)} through ${formatTimelineTimestamp(window.end)}`
+            : 'All recorded operational events affecting this service'}
         </p>
       </div>
 

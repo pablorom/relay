@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import { sortInvestigationTimeline } from './investigation-timeline'
 import type { InvestigationTimelineItem } from './investigation-timeline.types'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { InvestigationTimeline } from '@/features/investigation/components/investigation-timeline'
 
 describe('sortInvestigationTimeline', () => {
   it('sorts investigation items chronologically', () => {
@@ -61,5 +63,22 @@ describe('sortInvestigationTimeline', () => {
     sortInvestigationTimeline(items)
 
     expect(items.map((item) => item.id)).toEqual(originalOrder)
+  })
+
+  it('describes the selected investigation window', () => {
+    const html = renderToStaticMarkup(
+      <InvestigationTimeline
+        items={[]}
+        window={{
+          start: '2026-09-27T13:00:00.000Z',
+          end: '2026-09-27T14:00:00.000Z',
+        }}
+      />,
+    )
+
+    expect(html).toContain('Events after')
+    expect(html).toContain('13:00')
+    expect(html).toContain('14:00')
+    expect(html).not.toContain('All recorded operational events affecting this service')
   })
 })

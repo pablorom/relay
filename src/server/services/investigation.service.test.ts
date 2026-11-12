@@ -4,6 +4,7 @@ import { DEMO_WORKSPACE_ID } from '@/server/db/demo/workspaces'
 
 import { getServiceInvestigationTimeline } from './investigation.service'
 import { createInvestigationWindow } from '@/domain/investigation/investigation-window'
+import { getServiceMetrics } from '@/server/services/metric.service'
 
 describe('getServiceInvestigationTimeline', () => {
   it('combines real deployment and incident records', async () => {
@@ -131,4 +132,32 @@ describe('getServiceInvestigationTimeline', () => {
 
     expect(timeline).toBeNull()
   })
+
+  it.each(['1h', '6h', '24h', '7d'] as const)(
+    'uses the metrics endpoint timestamp as the %s investigation anchor',
+    async (range) => {
+      const metrics = await getServiceMetrics(DEMO_WORKSPACE_ID, 'checkout-api', range)
+
+      expect(metrics).not.toBeNull()
+
+      const latestPoint = metrics?.at(-1)
+
+      expect(latestPoint).toBeDefined()
+
+      const window = createInvestigationWindow(range, latestPoint!.timestamp)
+
+      expect(window.end).toBe('2026-09-27T14:00:00.000Z')
+
+      const timeline = await getServiceInvestigationTimeline(
+        DEMO_WORKSPACE_ID,
+        'checkout-api',
+        window,
+      )
+
+      expect(timeline?.map((item) => item.id)).toEqual([
+        'deployment:dep-checkout-2184',
+        'incident:inc-1042',
+      ])
+    },
+  )
 })
