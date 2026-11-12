@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { DEMO_WORKSPACE_ID } from '@/server/db/demo/workspaces'
 
 import { getServiceInvestigationTimeline } from './investigation.service'
+import { createInvestigationWindow } from '@/domain/investigation/investigation-window'
 
 describe('getServiceInvestigationTimeline', () => {
   it('combines real deployment and incident records', async () => {
@@ -69,5 +70,65 @@ describe('getServiceInvestigationTimeline', () => {
     expect(timeline?.some((item) => item.kind === 'deployment' && item.version === 'v3.7.1')).toBe(
       true,
     )
+  })
+
+  it('returns events inside a selected investigation window', async () => {
+    const window = createInvestigationWindow('1h', '2026-09-27T14:00:00.000Z')
+
+    const timeline = await getServiceInvestigationTimeline(
+      DEMO_WORKSPACE_ID,
+      'checkout-api',
+      window,
+    )
+
+    expect(timeline?.map((item) => item.id)).toEqual([
+      'deployment:dep-checkout-2184',
+      'incident:inc-1042',
+    ])
+  })
+
+  it('excludes events outside a narrower investigation window', async () => {
+    const window = createInvestigationWindow('1h', '2026-09-27T13:32:00.000Z')
+
+    const timeline = await getServiceInvestigationTimeline(
+      DEMO_WORKSPACE_ID,
+      'checkout-api',
+      window,
+    )
+
+    expect(timeline?.map((item) => item.id)).toEqual(['deployment:dep-checkout-2184'])
+  })
+
+  it('returns an empty array when no events match the window', async () => {
+    const window = createInvestigationWindow('1h', '2026-09-27T12:00:00.000Z')
+
+    const timeline = await getServiceInvestigationTimeline(
+      DEMO_WORKSPACE_ID,
+      'checkout-api',
+      window,
+    )
+
+    expect(timeline).toEqual([])
+  })
+
+  it('preserves the complete timeline when no window is provided', async () => {
+    const timeline = await getServiceInvestigationTimeline(DEMO_WORKSPACE_ID, 'checkout-api')
+
+    expect(timeline?.map((item) => item.id)).toEqual([
+      'deployment:dep-checkout-2184',
+      'incident:inc-1042',
+    ])
+  })
+
+  it('returns null for a missing service even when a window is supplied', async () => {
+    const window = createInvestigationWindow('1h', '2026-09-27T14:00:00.000Z')
+
+    const timeline = await getServiceInvestigationTimeline(
+      DEMO_WORKSPACE_ID,
+      'missing-service',
+      window,
+    )
+
+    expect(timeline).toBeNull()
   })
 })
