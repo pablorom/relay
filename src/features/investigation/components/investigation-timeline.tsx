@@ -1,5 +1,5 @@
 import type { InvestigationTimelineItem } from '@/domain/investigation/investigation-timeline.types'
-import { InvestigationWindow } from '@/domain/investigation/investigation-window'
+import type { InvestigationWindow } from '@/domain/investigation/investigation-window'
 import Link from 'next/link'
 
 type InvestigationTimelineProps = {
